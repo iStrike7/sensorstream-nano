@@ -1,22 +1,27 @@
 use anchor_lang::prelude::*;
+use bytemuck::{Pod, Zeroable};
 
 #[account(zero_copy)]
-#[repr(packed)]
+#[repr(C)]
 pub struct SensorBuffer {
     pub readings: [Reading; 8],
     pub idx: u8,
+    pub bump: u8,
+    pub _padding: [u8; 6],
 }
 
 impl SensorBuffer {
-    pub const SIZE: usize = Reading::SIZE * 8 + 1;
+    pub const SIZE: usize = std::mem::size_of::<Self>();
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Default, Copy, Clone)]
+#[derive(AnchorSerialize, AnchorDeserialize, Default, Copy, Clone, Pod, Zeroable)]
+#[repr(C)]
 pub struct Reading {
     pub value: u16,
+    pub _padding: [u8; 6],
     pub timestamp: i64,
 }
 
 impl Reading {
-    pub const SIZE: usize = 2 + 8; // u16 + i64
+    pub const SIZE: usize = std::mem::size_of::<Self>();
 }

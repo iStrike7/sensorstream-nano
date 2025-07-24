@@ -1,31 +1,44 @@
+// Suppress the realloc deprecation warning from the program macro
+#![allow(deprecated)]
+// Suppress the unexpected `cfg` condition value from the program macro
+#![allow(unexpected_cfgs)]
+
 use anchor_lang::prelude::*;
 
-pub mod state;
 pub mod error;
+pub mod state;
 
-use state::*;
 use error::SensorStreamError;
+use state::*;
 
-declare_id!("sensorstream111111111111111111111111111111111");
+declare_id!("FWgDVkn3UHSRNgiA4WGM5Qo4LvdFTufivURpkZMiYPYo");
 
 #[program]
 pub mod sensorstream {
     use super::*;
 
-    pub fn submit_reading(
-        ctx: Context<SubmitReading>,
-        value: u16,
-        timestamp: i64,
-    ) -> Result<()> {
-        let buffer = &mut ctx.accounts.buffer;
+    pub fn submit_reading(ctx: Context<SubmitReading>, value: u16, timestamp: i64) -> Result<()> {
+        // Use AccountLoader's load_init as fallback for load_mut
+        // to set the discriminator
+        let mut buffer = match ctx.accounts.buffer.load_mut() {
+            Ok(v) => v,
+            Err(_) => ctx.accounts.buffer.load_init()?,
+        };
 
-        // TODO: Replay protection: Reject if timestamp <= last stored timestamp
-        // Hint: Use buffer.idx to locate the last written reading in the circular buffer
-        // If stale, return Err(SensorStreamError::StaleTimestamp.into());
+        // Replay protection
+        let last_timestamp =
+            buffer.readings[(buffer.idx as usize + 7) % buffer.readings.len()].timestamp;
+        if timestamp <= last_timestamp {
+            return Err(SensorStreamError::StaleTimestamp.into());
+        }
 
         // Write reading into circular buffer
         let idx = buffer.idx as usize;
-        buffer.readings[idx] = Reading { value, timestamp };
+        buffer.readings[idx] = Reading {
+            value,
+            timestamp,
+            _padding: [0; 6],
+        };
         buffer.idx = (buffer.idx + 1) % buffer.readings.len() as u8;
 
         // Emit event
@@ -44,13 +57,13 @@ pub struct SubmitReading<'info> {
     #[account(mut, signer)]
     pub bot: Signer<'info>,
     #[account(
-        mut,
+        init_if_needed,
         seeds = [b"sensor", bot.key().as_ref()],
         bump,
         payer = bot,
         space = 8 + SensorBuffer::SIZE
     )]
-    pub buffer: Account<'info, SensorBuffer>,
+    pub buffer: AccountLoader<'info, SensorBuffer>,
     pub system_program: Program<'info, System>,
 }
 

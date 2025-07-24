@@ -22,16 +22,16 @@ describe("sensorstream - submitReading works", () => {
   before(async () => {
     [bufferPda] = anchor.web3.PublicKey.findProgramAddressSync(
       [Buffer.from("sensor"), bot.publicKey.toBuffer()],
-      program.programId
+      program.programId,
     );
-    
+
     const airdropSig = await provider.connection.requestAirdrop(
       bot.publicKey,
-      2 * anchor.web3.LAMPORTS_PER_SOL
+      2 * anchor.web3.LAMPORTS_PER_SOL,
     );
-    
+
     const latestBlockhash = await provider.connection.getLatestBlockhash();
-    
+
     await provider.connection.confirmTransaction({
       signature: airdropSig,
       blockhash: latestBlockhash.blockhash,
@@ -59,7 +59,6 @@ describe("sensorstream - submitReading works", () => {
     const firstReading = bufferData.readings[0]; // Assuming the first reading is written
     assert.equal(firstReading.value, 42); // Check if value is written
     assert.equal(firstReading.timestamp.toNumber(), ts.toNumber()); // Check if timestamp is written
-    
   });
 
   it("stale timestamp fails", async () => {
@@ -92,7 +91,11 @@ describe("sensorstream - submitReading works", () => {
       assert.fail("Stale timestamp should have failed");
     } catch (err) {
       const error = err as Error;
-      assert.include(error.message, "AnchorError occurred. Error Code: StaleTimestamp.", "Expected 'StaleTimestamp' error but got: " + error.message);
+      assert.include(
+        error.message,
+        "AnchorError occurred. Error Code: StaleTimestamp.",
+        "Expected 'StaleTimestamp' error but got: " + error.message,
+      );
       assert.ok("Expected error thrown");
     }
   });
@@ -106,9 +109,11 @@ describe("sensorstream - submitReading works", () => {
     tsBump += 1;
     const secondTs = new anchor.BN(ts.toNumber() + tsBump);
 
-    const bufferSize = (await program.account.sensorBuffer.fetch(bufferPda)).readings.length;
+    const bufferSize = (await program.account.sensorBuffer.fetch(bufferPda))
+      .readings.length;
 
-    const firstIndex = (await program.account.sensorBuffer.fetch(bufferPda)).idx;
+    const firstIndex = (await program.account.sensorBuffer.fetch(bufferPda))
+      .idx;
     const secondIndex = (firstIndex + 1) % bufferSize;
 
     // first write
@@ -121,7 +126,7 @@ describe("sensorstream - submitReading works", () => {
       })
       .signers([bot])
       .rpc();
-    
+
     // second write
     await program.methods
       .submitReading(secondValue, secondTs)
@@ -133,7 +138,7 @@ describe("sensorstream - submitReading works", () => {
       .signers([bot])
       .rpc();
 
-    const bufferData = await program.account.sensorBuffer.fetch(bufferPda)
+    const bufferData = await program.account.sensorBuffer.fetch(bufferPda);
 
     const firstReading = bufferData.readings[firstIndex];
     const secondReading = bufferData.readings[secondIndex];
@@ -143,17 +148,17 @@ describe("sensorstream - submitReading works", () => {
 
     assert.equal(firstTs.toNumber(), firstReading.timestamp.toNumber());
     assert.equal(secondTs.toNumber(), secondReading.timestamp.toNumber());
-
   });
 
   it("wrap around works correctly", async () => {
-
-    const bufferSize = (await program.account.sensorBuffer.fetch(bufferPda)).readings.length;
+    const bufferSize = (await program.account.sensorBuffer.fetch(bufferPda))
+      .readings.length;
 
     const lastIdx = bufferSize - 1;
     const fillValue = 5000;
 
-    let isLastIdx = ((await program.account.sensorBuffer.fetch(bufferPda)).idx == lastIdx);
+    let isLastIdx =
+      (await program.account.sensorBuffer.fetch(bufferPda)).idx == lastIdx;
 
     while (!isLastIdx) {
       tsBump += 1;
@@ -169,10 +174,14 @@ describe("sensorstream - submitReading works", () => {
         .signers([bot])
         .rpc();
 
-      isLastIdx = ((await program.account.sensorBuffer.fetch(bufferPda)).idx == lastIdx);
+      isLastIdx =
+        (await program.account.sensorBuffer.fetch(bufferPda)).idx == lastIdx;
     }
 
-    assert.equal((await program.account.sensorBuffer.fetch(bufferPda)).idx, lastIdx)
+    assert.equal(
+      (await program.account.sensorBuffer.fetch(bufferPda)).idx,
+      lastIdx,
+    );
 
     const firstValue = 1000;
     const secondValue = 2000;
@@ -182,7 +191,8 @@ describe("sensorstream - submitReading works", () => {
     tsBump += 1;
     const secondTs = new anchor.BN(ts.toNumber() + tsBump);
 
-    const firstIndex = (await program.account.sensorBuffer.fetch(bufferPda)).idx;
+    const firstIndex = (await program.account.sensorBuffer.fetch(bufferPda))
+      .idx;
     const secondIndex = (firstIndex + 1) % bufferSize;
 
     // first write
@@ -195,7 +205,7 @@ describe("sensorstream - submitReading works", () => {
       })
       .signers([bot])
       .rpc();
-    
+
     // second write
     await program.methods
       .submitReading(secondValue, secondTs)
@@ -207,19 +217,17 @@ describe("sensorstream - submitReading works", () => {
       .signers([bot])
       .rpc();
 
-      const bufferData = await program.account.sensorBuffer.fetch(bufferPda)
+    const bufferData = await program.account.sensorBuffer.fetch(bufferPda);
 
-      const firstReading = bufferData.readings[firstIndex];
-      const secondReading = bufferData.readings[secondIndex];
+    const firstReading = bufferData.readings[firstIndex];
+    const secondReading = bufferData.readings[secondIndex];
 
-      assert.equal(firstValue, firstReading.value);
-      assert.equal(secondValue, secondReading.value);
+    assert.equal(firstValue, firstReading.value);
+    assert.equal(secondValue, secondReading.value);
 
-      assert.equal(firstTs.toNumber(), firstReading.timestamp.toNumber());
-      assert.equal(secondTs.toNumber(), secondReading.timestamp.toNumber());
-
+    assert.equal(firstTs.toNumber(), firstReading.timestamp.toNumber());
+    assert.equal(secondTs.toNumber(), secondReading.timestamp.toNumber());
   });
-
 });
 
 describe("sensorstream - bench", () => {
@@ -236,16 +244,16 @@ describe("sensorstream - bench", () => {
   before(async () => {
     [bufferPda] = anchor.web3.PublicKey.findProgramAddressSync(
       [Buffer.from("sensor"), bot.publicKey.toBuffer()],
-      program.programId
+      program.programId,
     );
 
     const airdropSig = await provider.connection.requestAirdrop(
       bot.publicKey,
-      2 * anchor.web3.LAMPORTS_PER_SOL
+      2 * anchor.web3.LAMPORTS_PER_SOL,
     );
-    
+
     const latestBlockhash = await provider.connection.getLatestBlockhash();
-    
+
     await provider.connection.confirmTransaction({
       signature: airdropSig,
       blockhash: latestBlockhash.blockhash,
@@ -266,12 +274,13 @@ describe("sensorstream - bench", () => {
       })
       .instruction();
 
-    const { blockhash } = await program.provider.connection.getLatestBlockhash();
+    const { blockhash } =
+      await program.provider.connection.getLatestBlockhash();
 
     const config: SimulateTransactionConfig = {
       sigVerify: true,
-      commitment: 'processed',
-    }
+      commitment: "processed",
+    };
 
     const messageV0 = new TransactionMessage({
       payerKey: bot.publicKey,
@@ -284,11 +293,13 @@ describe("sensorstream - bench", () => {
 
     const simulationResult = await provider.connection.simulateTransaction(
       versionedTx,
-      config
+      config,
     );
-    
-    assert.isTrue(simulationResult.value.unitsConsumed < computeBudget, 'Tx not within budget');
-    
+
+    assert.isTrue(
+      simulationResult.value.unitsConsumed < computeBudget,
+      "Tx not within budget",
+    );
   });
 
   it("sensorstream - compute units check - submitReading update", async () => {
@@ -315,12 +326,13 @@ describe("sensorstream - bench", () => {
       })
       .instruction();
 
-    const { blockhash } = await program.provider.connection.getLatestBlockhash();
+    const { blockhash } =
+      await program.provider.connection.getLatestBlockhash();
 
     const config: SimulateTransactionConfig = {
       sigVerify: true,
-      commitment: 'processed',
-    }
+      commitment: "processed",
+    };
 
     const messageV0 = new TransactionMessage({
       payerKey: bot.publicKey,
@@ -333,11 +345,12 @@ describe("sensorstream - bench", () => {
 
     const simulationResult = await provider.connection.simulateTransaction(
       versionedTx,
-      config
+      config,
     );
-    
-    assert.isTrue(simulationResult.value.unitsConsumed < computeBudget, 'Tx not within budget');
-    
-  });
 
+    assert.isTrue(
+      simulationResult.value.unitsConsumed < computeBudget,
+      "Tx not within budget",
+    );
+  });
 });

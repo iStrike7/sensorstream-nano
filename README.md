@@ -9,8 +9,8 @@ Run `yarn` and then `anchor test`
 
 ## Compute units used
 
-- **submit_reading Init: 8k - 16k**
-- **submit_reading Update: 4k - 12k**
+- **submit_reading init: 8k - 16k**
+- **submit_reading update: 4k - 12k**
 
 ## Approach summary
 
@@ -28,6 +28,11 @@ Method:
 
 1. Add correct padding to the SensorBuffer for repr(C) and fix size consts
 2. Use AccountLoader's load_init() as fall back to load_mut() to set the discriminator
+
+## Future focus
+1. Edge and security test cases
+2. Benchmarking without zerocopy
+3. Using Rust native development to avoid submit_reading update compute units variability
 
 ## Claim reward instruction
 

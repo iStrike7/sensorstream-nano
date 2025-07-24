@@ -4,7 +4,7 @@ Run `yarn` and then `anchor test`
 
 ## Timing
 
-- **Rougly 6 hours approx**
+- **6 hours approx**
 - **Not a continous stretch**
 
 ## Compute units used

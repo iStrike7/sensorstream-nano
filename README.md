@@ -30,6 +30,7 @@ Method:
 2. Use AccountLoader's load_init() as fall back to load_mut() to set the discriminator
 
 ## Future focus
+
 1. Edge and security test cases
 2. Benchmarking without zerocopy
 3. Using Rust native development to avoid submit_reading update compute units variability

@@ -9,15 +9,15 @@ Run `yarn` and then `anchor test`
 
 ## Compute units used
 
-- **submitReading Init: 8k - 16k**
-- **submitReading Update: 4k - 12k**
+- **submit_reading Init: 8k - 16k**
+- **submit_reading Update: 4k - 12k**
 
 ## Approach summary
 
 Key goals:
 
 1. Keep using zerocopy for performance
-2. Keep submitReading as the only function that needs to be called by the sensor
+2. Keep submit_reading as the only function that needs to be called by the sensor
 
 Challenges:
 
